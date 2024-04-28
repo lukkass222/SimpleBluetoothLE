@@ -24,9 +24,9 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.lukkass.simplebluetoothmanagerle.BluetoothManagerLE;
 import com.lukkass.simplebluetoothmanagerle.interfaces.BleCallback;
 import com.lukkass.simplebluetoothmanagerle.models.BluetoothLE;
-import com.lukkass.simplebluetoothmanagerle.BluetoothManagerLE;
 import com.lukkass.simplebluetoothmanagerle.utils.Functions;
 import com.lukkass.simplebluetoothmanagerle.utils.Permissions;
 
