@@ -27,6 +27,18 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+    
+    publishing {
+        singleVariant('release') {
+            withSourcesJar()
+            withJavadocJar()
+        }
+
+        singleVariant('debug') {
+            withSourcesJar()
+            withJavadocJar()
+        }
+    }
 }
 
 dependencies {
@@ -60,7 +72,17 @@ afterEvaluate {
     publishing {
         publications {
             release(MavenPublication) {
-                from components.findByName('release')
+                from components.getByName('release')
+
+                groupId = 'com.github.lukkass222'
+                artifactId = 'SimpleBluetoothManagerLe'
+                version = '0.9.0-beta'
+            }
+
+            // Creates a Maven publication called “debug”.
+            debug(MavenPublication) {
+                // Applies the component for the debug build variant.
+                components.getByName('debug')
 
                 groupId = 'com.github.lukkass222'
                 artifactId = 'SimpleBluetoothManagerLe'
@@ -73,7 +95,7 @@ afterEvaluate {
 ext {
 
     publishedGroupId = 'com.github.lukkass222'
-    libraryName = 'Simple Bluetooth Manager LE'
+    libraryName = 'SimpleBluetoothManagerLe'
     artifact = 'SimpleBluetoothManagerLE'
     libraryDescription = 'This project is a simple interface to facilitate the use of the native Android API, Bluetooth le (BLE), which allows basic operations with BLE.'
     
