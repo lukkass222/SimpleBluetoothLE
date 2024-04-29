@@ -1,7 +1,12 @@
 package com.lukkass.simplebluetoothmanagerle;
 
 
-import static com.lukkass.simplebluetoothmanagerle.interfaces.BleCallback.*;
+import static com.lukkass.simplebluetoothmanagerle.interfaces.BleCallback.OnCharacteristicChangeListener;
+import static com.lukkass.simplebluetoothmanagerle.interfaces.BleCallback.OnCharacteristicReadListener;
+import static com.lukkass.simplebluetoothmanagerle.interfaces.BleCallback.OnCharacteristicWriteListener;
+import static com.lukkass.simplebluetoothmanagerle.interfaces.BleCallback.OnConnectionStateChangeListener;
+import static com.lukkass.simplebluetoothmanagerle.interfaces.BleCallback.OnScanDiscoveredListener;
+import static com.lukkass.simplebluetoothmanagerle.interfaces.BleCallback.OnScanStateChangeListener;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -20,8 +25,6 @@ import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
-import android.util.Log;
-
 
 import androidx.annotation.NonNull;
 
@@ -360,18 +363,18 @@ public class BluetoothManagerLE  {
         boolean STATUS = mBluetoothGatt.setCharacteristicNotification(characteristic, true);
         boolean ENABLE_NOTIFICATION_VALUE = false;
         boolean writeDescriptor = false;
-        Log.i("setNotifications", "Notifications STATUS " + STATUS);
+ //       Log.i("setNotifications", "Notifications STATUS " + STATUS);
         //characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
         for (BluetoothGattDescriptor descriptor : characteristic.getDescriptors()) {
 
             //   BluetoothGattDescriptor descriptor = characteristic.getDescriptor(UUID.fromString(CCC_DESCRIPTOR_UUID));
             ENABLE_NOTIFICATION_VALUE = descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-            Log.i("NOTIFICATION", ("ENABLE_NOTIFICATION_VALUE: "+ ENABLE_NOTIFICATION_VALUE));
+    //        Log.i("NOTIFICATION", ("ENABLE_NOTIFICATION_VALUE: "+ ENABLE_NOTIFICATION_VALUE));
             // descriptor.setValue(BluetoothGattDescriptor.ENABLE_INDICATION_VALUE);
             //   characteristic.addDescriptor(descriptor);
             //   characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
             writeDescriptor = mBluetoothGatt.writeDescriptor(descriptor);
-            Log.i("writeDescriptor", "writeDescriptor STATUS " + writeDescriptor);
+         //   Log.i("writeDescriptor", "writeDescriptor STATUS " + writeDescriptor);
         }
         return STATUS && ENABLE_NOTIFICATION_VALUE && writeDescriptor;
     }
