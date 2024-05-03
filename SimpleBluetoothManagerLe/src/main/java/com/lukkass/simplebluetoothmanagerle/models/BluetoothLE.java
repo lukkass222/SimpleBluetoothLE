@@ -9,9 +9,9 @@ public class BluetoothLE {
     private int rssi;
     private BluetoothDevice device;
 
-    public BluetoothLE(String name, String macAddress, int rssi, BluetoothDevice device) {
-        this.name       = name;
-        this.macAddress = macAddress;
+    public BluetoothLE(int rssi, BluetoothDevice device) {
+        this.name       = device.getName();
+        this.macAddress = device.getAddress();
         this.rssi       = rssi;
         this.device     = device;
     }

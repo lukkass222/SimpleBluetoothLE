@@ -15,7 +15,6 @@ import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
-import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
@@ -23,6 +22,7 @@ import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.Looper;
 import android.provider.Settings;
 
@@ -48,7 +48,7 @@ public class BluetoothManagerLE  {
     private static int mConnectionState = STATE_DISCONNECTED;
     private static int SCAN_PERIOD = 10000;
     private static boolean mScanning = false;
-    private static String FILTER_SERVICE = "";
+    private static final ArrayList<String> FILTER_SERVICE = new ArrayList<>();
 
     private static final BluetoothGattCallbackLE mGattCallback = new BluetoothGattCallbackLE() {
         @Override
@@ -89,13 +89,69 @@ public class BluetoothManagerLE  {
      * @param isScanningCallback callback used to monitor the {@link #isScanning()} status
      * @param DiscoveryCallback the callback LE scan results are delivered
      * @return true, if the scan was started successfully
-     * @see #setFilterService(String)
+     * @see #useFilterService()
      */
     public static boolean scanLeDevice(final OnScanStateChangeListener isScanningCallback, final OnScanDiscoveredListener DiscoveryCallback) {
 
-        if (isScanningCallback != null) useCallback().setListener(isScanningCallback);
+        if (mScanning) {
+            stopScanDeviceN();
+            return false; //scan ja em execução
+        }
         
-        new Handler(Looper.getMainLooper()).postDelayed(BluetoothManagerLE::stopScanDevice, SCAN_PERIOD);
+        if (isScanningCallback != null) useCallback().setListener(isScanningCallback);
+
+        if (true) {
+
+            mScanning = true;
+
+            //https://stackoverflow.com/questions/61023968/what-do-i-use-now-that-handler-is-deprecated
+            // Create a background thread that has a Looper
+            HandlerThread handlerThread = new HandlerThread("HandlerThread");
+            handlerThread.start();
+
+            //      ScheduledExecutorService backgroundExecutor = Executors.newSingleThreadScheduledExecutor();
+
+            long startTime = System.currentTimeMillis();
+
+            // Execute a task in the background thread.
+            new Handler(handlerThread.getLooper()).post(() -> {
+                // backgroundExecutor.execute(() -> {
+
+                while (mScanning) {
+
+                    long elapsedTime = (System.currentTimeMillis() - startTime);
+
+                    if (elapsedTime >= SCAN_PERIOD) {
+
+                        new Handler(Looper.getMainLooper()).post(() -> {
+                            if (mScanning)
+                                stopScanDevice();
+                        });
+
+                        break;
+                    }
+
+                    if ( mGattCallback.getOnScanStateChangeListener() != null)
+                        mGattCallback.getOnScanStateChangeListener().onScanningElapsedTime(elapsedTime);
+
+                    //scannableTimeout
+                    long remainingTime = SCAN_PERIOD - elapsedTime;
+
+
+                }
+
+                //desligar o executor após o uso.
+                // backgroundExecutor.shutdown();
+                handlerThread.quitSafely(); // or handlerThread.quitSafely();
+            });
+
+        } else {
+
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                if (mScanning)
+                    stopScanDevice();
+            }, SCAN_PERIOD);
+        }
 
         return startScanDevice(DiscoveryCallback);
     }
@@ -109,7 +165,7 @@ public class BluetoothManagerLE  {
      * @see BluetoothManagerLE#useCallback() 
      *
      * @return true, if the scan was started successfully
-     * @see #setFilterService(String) 
+     * @see #useFilterService() 
      */
     public static boolean startScanDevice() {
         return startScanDevice(null);
@@ -125,27 +181,31 @@ public class BluetoothManagerLE  {
      * @param DiscoveryCallback the callback LE scan results are delivered
      * @return true, if the scan was started successfully
      * 
-     * @see #setFilterService(String) 
+     * @see #useFilterService() 
      */
     @SuppressLint("MissingPermission")
     public static boolean startScanDevice(final OnScanDiscoveredListener DiscoveryCallback) {
         mScanning = true;
         aDevices.clear();
-        
+
         if (DiscoveryCallback != null)
             mGattCallback.getCallback().setListener(DiscoveryCallback);
-       
-        if (mGattCallback.getOnScanStateChangeListener() != null) {
+
+        if ( mGattCallback.getOnScanStateChangeListener() != null)
             mGattCallback.getOnScanStateChangeListener().onStateChange(mScanning);
-        }
-       
+
         if (!FILTER_SERVICE.isEmpty()) {
-            UUID[] filter = new UUID[1];
-            filter[0] = UUID.fromString(FILTER_SERVICE);
-            return mBluetoothAdapter.startLeScan(filter, mLeScanCallback);
+            UUID[] filter = new UUID[FILTER_SERVICE.size()];
+
+            for (int i = 0; i < filter.length; i++) {
+                filter[i] = UUID.fromString(FILTER_SERVICE.get(i));
+            }
+
+            return  mBluetoothAdapter.startLeScan(filter, mLeScanCallback);
         } else {
-            return mBluetoothAdapter.startLeScan(mLeScanCallback);
+            return  mBluetoothAdapter.startLeScan(mLeScanCallback);
         }
+        
     }
 
     /**
@@ -157,11 +217,17 @@ public class BluetoothManagerLE  {
     public static void stopScanDevice() {
         mScanning = false;
         mBluetoothAdapter.stopLeScan(mLeScanCallback);
-        if (mGattCallback.getOnScanStateChangeListener() != null)
+        
+        if ( mGattCallback.getOnScanStateChangeListener() != null) {
             mGattCallback.getOnScanStateChangeListener().onStateChange(mScanning);
-
+        }
     }
-
+    
+    private static void stopScanDeviceN() {
+        mScanning = false;
+        mBluetoothAdapter.stopLeScan(mLeScanCallback);
+    }
+    
     @SuppressLint("MissingPermission")
     private static final BluetoothAdapter.LeScanCallback mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
         @Override
@@ -176,7 +242,7 @@ public class BluetoothManagerLE  {
             }
 
             if (isNewItem) {
-                BluetoothLE bluetoothLE = new BluetoothLE(device.getName(), device.getAddress(), rssi, device);
+                BluetoothLE bluetoothLE = new BluetoothLE(rssi, device);
                 aDevices.add(bluetoothLE);
 
                 if (mGattCallback.getOnScanDiscoveredListener() != null)
@@ -194,11 +260,13 @@ public class BluetoothManagerLE  {
      * hardware address, even if this adapter has never seen that device.
      * 
      * @param address valid Bluetooth MAC address
-     * @return returns false if address is invalid
+     * @return The method returns a BluetoothGatt instance. You can use BluetoothGatt to conduct
+     * GATT client operations.
+     * @throws IllegalArgumentException if address is invalid
      *
      */
     @SuppressLint("MissingPermission")
-    public static boolean connect(@NonNull final Context _context, @NonNull final String address) {
+    public static BluetoothGatt connect(@NonNull final Context _context, @NonNull final String address) {
         return connect(_context, address, null);
     }
 
@@ -212,23 +280,17 @@ public class BluetoothManagerLE  {
      *
      * @param address valid Bluetooth MAC address
      * @param callback GATT callback handler that will receive asynchronous callbacks          
-     * @return returns false if address is invalid
+     * @return The method returns a BluetoothGatt instance. You can use BluetoothGatt to conduct
+     * GATT client operations.
+     * @throws IllegalArgumentException if address is invalid
      *
      */
     @SuppressLint("MissingPermission")
-    public static boolean connect(@NonNull final Context _context, @NonNull final String address,
+    public static BluetoothGatt connect(@NonNull final Context _context, @NonNull final String address,
                                   final OnConnectionStateChangeListener callback) {
-        
-        try {
-            final BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
-            connect(_context, device, callback);
-        } catch (IllegalArgumentException exception) {
-            exception.printStackTrace();
-            //    Log.w(TAG, "Device not found with provided address.");
-            return false;
-        }
 
-        return true;
+        final BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
+        return connect(_context, device, callback);
     }
     
     /**
@@ -241,6 +303,8 @@ public class BluetoothManagerLE  {
      * use the {@link OnConnectionStateChangeListener }
      * interface to monitor the connection status in {@link BluetoothManagerLE#useCallback()}
      * @param device device you want to connect.
+     * @return The method returns a BluetoothGatt instance. You can use BluetoothGatt to conduct
+     *      * GATT client operations.
      */
     public static BluetoothGatt connect(final Context _context, final BluetoothDevice device) {
         
@@ -256,6 +320,8 @@ public class BluetoothManagerLE  {
      *<p>
      * @param callback GATT callback handler that will receive asynchronous callbacks
      * @param device device you want to connect.
+     * @return The method returns a BluetoothGatt instance. You can use BluetoothGatt to conduct 
+     * GATT client operations.
      */
     @SuppressLint("MissingPermission")
     public static BluetoothGatt connect(final Context _context, final BluetoothDevice device, final OnConnectionStateChangeListener callback) {
@@ -263,19 +329,29 @@ public class BluetoothManagerLE  {
         if (mBluetoothGatt != null) {
             mBluetoothGatt.close();
         }
+        
         if (callback != null)
             mGattCallback.getCallback().setListener(callback);
+
         mBluetoothGatt = device.connectGatt(_context, false, mGattCallback);
+        
+        if ( mGattCallback.getCallback().onConnectionStateChangeListener != null)
+            mGattCallback.getCallback().onConnectionStateChangeListener
+                    .onConnectionStateChange(mBluetoothGatt, BluetoothGatt.GATT_SUCCESS, BluetoothGatt.STATE_CONNECTING);
 
         return mBluetoothGatt;
     }
     
     @SuppressLint("MissingPermission")
-    public static void disconnect() {
+    public static void disconnect() {        
         if (mBluetoothGatt != null) {
+            if ( mGattCallback.getCallback().onConnectionStateChangeListener != null)
+                mGattCallback.getCallback().onConnectionStateChangeListener
+                        .onConnectionStateChange(mBluetoothGatt, BluetoothGatt.GATT_SUCCESS, BluetoothGatt.STATE_DISCONNECTING);
             mBluetoothGatt.disconnect();
            // mBluetoothGatt.close();
         }
+        
         mConnectionState = STATE_DISCONNECTED;
        // mBluetoothGatt = null;
     }
@@ -283,7 +359,7 @@ public class BluetoothManagerLE  {
     /**
      * verifica se tem as permições do bluetooth e do gps é depois solicita a ligação dos recursos,
      * casos estejam desligados.
-     * o gps só é verificado até o sdk 30
+     * o gps só é usado até o sdk 30
      * @return retorna true se o gps e o bluetooth estiverem ligados
      */
     public static boolean isEnabled(Context _context) {
@@ -345,9 +421,9 @@ public class BluetoothManagerLE  {
         }
     }
     
-    public static void setNotifiable(BluetoothGattService service, OnCharacteristicChangeListener onCharacteristicChangeListener){
+    public static void setNotifiable(BluetoothGattService service, OnCharacteristicChangeListener onCharacteristicChangeListener) {
         for (BluetoothGattCharacteristic characteristic : service.getCharacteristics()) {
-        setNotifiable(characteristic, onCharacteristicChangeListener);
+            setNotifiable(characteristic, onCharacteristicChangeListener);
         }
     }
     
@@ -379,6 +455,21 @@ public class BluetoothManagerLE  {
         return STATUS && ENABLE_NOTIFICATION_VALUE && writeDescriptor;
     }
 
+    /**
+     * Returns a characteristic with a given UUID out of the list of
+     * characteristics offered by this service.
+     *
+     * <p>This is a convenience function to allow access to a given characteristic
+     * without enumerating over the list returned by {@link BluetoothGattService#getCharacteristics}
+     * manually.
+     *
+     * <p>If a remote service offers multiple characteristics with the same
+     * UUID, the first instance of a characteristic with the given UUID
+     * is returned.
+     *
+     * @return GATT characteristic object or null if no characteristic with the given UUID was
+     * found.
+     */
     public static BluetoothGattCharacteristic getCharacteristic(String service, String characteristic) {
         return mBluetoothGatt.getService(UUID.fromString(service)).getCharacteristic(UUID.fromString(characteristic));
     }
@@ -410,21 +501,21 @@ public class BluetoothManagerLE  {
         return SCAN_PERIOD;
     }
 /**
- * @param filterService Array of services to look for
+ *  Array of services to look for
  */
-    public static void setFilterService(String filterService) {
-        FILTER_SERVICE = filterService;
+    public static ArrayList<String> useFilterService() {
+     //   FILTER_SERVICE = filterService;
+        return FILTER_SERVICE;
     }
+    
     
     public static ArrayList<BluetoothLE> getListDevices() {
         return aDevices;
     }
     
-    @Deprecated
-    public static void setBluetoothGattCallback(BluetoothGattCallback callback) {
-        
+    public static BluetoothAdapter getAdapter() {
+        return mBluetoothAdapter;
     }
-    
     public static BleCallback useCallback()
     {
        return mGattCallback.getCallback();

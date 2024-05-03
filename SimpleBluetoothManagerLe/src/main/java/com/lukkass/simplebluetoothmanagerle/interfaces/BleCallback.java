@@ -4,8 +4,8 @@ import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothProfile;
 
-import com.lukkass.simplebluetoothmanagerle.models.BluetoothLE;
 import com.lukkass.simplebluetoothmanagerle.BluetoothManagerLE;
+import com.lukkass.simplebluetoothmanagerle.models.BluetoothLE;
 
 
 public class BleCallback {
@@ -20,7 +20,9 @@ public class BleCallback {
          * @param isScanning is true when {@link BluetoothManagerLE#scanLeDevice} starts,
          *                  false when {@link BluetoothManagerLE#scanLeDevice} stops.
          */
-        void onStateChange(final boolean isScanning);
+        default void onStateChange(final boolean isScanning){}
+
+        default void onScanningElapsedTime(final float elapsedTime) {}
     }
 
     /**
@@ -32,7 +34,7 @@ public class BleCallback {
          * by the {@link BluetoothManagerLE#scanLeDevice} function.
          *
          */
-        void onScanDiscovered(BluetoothLE bluetoothLE);
+        void onScanDiscovered(final BluetoothLE bluetoothLE);
     }
 
     /**
@@ -50,7 +52,7 @@ public class BleCallback {
          * @param newState Returns the new connection state. Can be one of {@link
          * BluetoothProfile#STATE_DISCONNECTED} or {@link BluetoothProfile#STATE_CONNECTED}
          */
-        void onConnectionStateChange(BluetoothGatt gatt, int status, int newState);
+        void onConnectionStateChange(final BluetoothGatt gatt, final int status, final int newState);
     }
 
     /**
@@ -65,7 +67,7 @@ public class BleCallback {
          * @param status {@link BluetoothGatt#GATT_SUCCESS} if the remote device has been explored
          * successfully.
          */
-        void onServicesDiscovered(BluetoothGatt gatt, int status);
+        void onServicesDiscovered(BluetoothGatt gatt, final int status);
     }
 
     /**
@@ -93,12 +95,12 @@ public class BleCallback {
         void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status);
     }
     
-    //---------------------------------------------------------------------------------------------
+    //-------------------------------------mudar para um arraylist no futuro--------------------------------------------------------
 
-    protected OnScanStateChangeListener onScanStateChangeListener;
+    protected OnScanStateChangeListener onScanStateChangeListener ;
     
     public void setListener(OnScanStateChangeListener _onScanStateChangeListener) {
-        onScanStateChangeListener = _onScanStateChangeListener;
+        onScanStateChangeListener= _onScanStateChangeListener;
     }
     
     protected OnScanDiscoveredListener onScanDiscoveredListener;
@@ -107,7 +109,7 @@ public class BleCallback {
         onScanDiscoveredListener = _onScanDiscoveredListener;
     }
     
-    protected OnConnectionStateChangeListener onConnectionStateChangeListener;
+    public OnConnectionStateChangeListener onConnectionStateChangeListener;
     public void  setListener(OnConnectionStateChangeListener _onConnectionStateChangeListener){
         onConnectionStateChangeListener = _onConnectionStateChangeListener;
     }
