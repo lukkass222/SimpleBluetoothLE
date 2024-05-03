@@ -133,6 +133,7 @@ public class exampleActivity extends AppCompatActivity implements View.OnClickLi
                             break;
 
                         default:
+                            Toast.makeText(getApplicationContext(), "new State "+newState, Toast.LENGTH_SHORT).show();
                             break;
                     }
                 });
