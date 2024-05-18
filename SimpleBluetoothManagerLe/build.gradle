@@ -10,7 +10,7 @@ android {
     defaultConfig {
         minSdk 18
 
-        versionName "0.9.0-beta"
+        versionName "0.9.0"
         
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
@@ -30,11 +30,6 @@ android {
     
     publishing {
         singleVariant('release') {
-            withSourcesJar()
-            withJavadocJar()
-        }
-
-        singleVariant('debug') {
             withSourcesJar()
             withJavadocJar()
         }
@@ -75,16 +70,7 @@ afterEvaluate {
 
                 groupId = 'com.github.lukkass222'
                 artifactId = 'SimpleBluetoothManagerLe'
-                version = '0.9.0-beta'
-            }
-            // Creates a Maven publication called “debug”.
-            debug(MavenPublication) {
-                // Applies the component for the debug build variant.
-                components.getByName('debug')
-
-                groupId = 'com.github.lukkass222'
-                artifactId = 'SimpleBluetoothManagerLe'
-                version = '0.9.0-beta'
+                version = '0.9.0'
             }
         }
     }
@@ -100,7 +86,7 @@ ext {
     siteUrl = 'https://github.com/lukkass222/SimpleBluetoothLE'
     gitUrl = 'https://github.com/lukkass222/SimpleBluetoothLE.git'
 
-    libraryVersion = '0.9.0-beta'
+    libraryVersion = '0.9.0'
 
     developerId = 'lukkass222'
     developerName = 'lucas'

@@ -112,9 +112,9 @@ public class BluetoothManagerLE  {
             //      ScheduledExecutorService backgroundExecutor = Executors.newSingleThreadScheduledExecutor();
 
             long startTime = System.currentTimeMillis();
-
-            // Execute a task in the background thread.
+            
             new Handler(handlerThread.getLooper()).post(() -> {
+            // Execute a task in the background thread.
                 // backgroundExecutor.execute(() -> {
 
                 while (mScanning) {
@@ -135,7 +135,7 @@ public class BluetoothManagerLE  {
                         mGattCallback.getOnScanStateChangeListener().onScanningElapsedTime(elapsedTime);
 
                     //scannableTimeout
-                    long remainingTime = SCAN_PERIOD - elapsedTime;
+                   // long remainingTime = SCAN_PERIOD - elapsedTime;
 
 
                 }
@@ -507,7 +507,10 @@ public class BluetoothManagerLE  {
      //   FILTER_SERVICE = filterService;
         return FILTER_SERVICE;
     }
-    
+
+    public static BluetoothGatt getBluetoothGatt() {
+        return mBluetoothGatt;
+    }
     
     public static ArrayList<BluetoothLE> getListDevices() {
         return aDevices;
