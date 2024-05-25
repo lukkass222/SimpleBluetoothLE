@@ -471,7 +471,12 @@ public class BluetoothManagerLE  {
      * found.
      */
     public static BluetoothGattCharacteristic getCharacteristic(String service, String characteristic) {
-        return mBluetoothGatt.getService(UUID.fromString(service)).getCharacteristic(UUID.fromString(characteristic));
+        BluetoothGattService service1 = mBluetoothGatt.getService(UUID.fromString(service));
+
+        if (service1 != null)
+            return service1.getCharacteristic(UUID.fromString(characteristic));
+
+        return null;
     }
     
     @Deprecated
