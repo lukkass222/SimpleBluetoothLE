@@ -114,8 +114,7 @@ public class exampleActivity extends AppCompatActivity implements View.OnClickLi
             public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
                 Log.i(TAG, "connection status: " + newState);
 
-                if (status != BluetoothGatt.GATT_SUCCESS)
-                    return;
+              //  if (status != BluetoothGatt.GATT_SUCCESS) return;
 
                 new Handler(Looper.getMainLooper()).post(() -> {
                     switch (newState) {
