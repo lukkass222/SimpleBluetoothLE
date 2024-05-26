@@ -35,7 +35,7 @@ android {
 
 dependencies {
 
-    implementation ("androidx.appcompat:appcompat:1.4.1")
+    implementation ("androidx.appcompat:appcompat:1.6.1")
     implementation ("androidx.activity:activity:1.7.2")
     implementation("com.google.android.material:material:1.11.0")
     implementation(project(":SimpleBluetoothManagerLe"))
